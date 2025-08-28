@@ -4,14 +4,16 @@ from diagrams.aws.network import ELB, VPC, InternetGateway, RouteTable
 from diagrams.aws.storage import S3
 from diagrams.aws.general import User
 
-with Diagram("|Diagrama de Rede| Tech4Good", filename="diagrama_de_rede_tech4good"):
+with Diagram("|Diagrama de Rede| Tech4Good", filename="diagrama_de_rede_tech4good", direction="LR"):
     with Cluster("VPC 10.0.0.0/26"):
         # Buckets S3 dentro de um cluster
-        with Cluster("S3"):
-            s3_raw = S3("Raw")
+        with Cluster("S3", direction="TB"):
             s3_trusted = S3("Trusted")
+            s3_raw = S3("Raw")
             s3_curated = S3("Curated")
-            s3_buckets = [s3_raw, s3_trusted, s3_curated]
+            s3_raw >> s3_trusted >> s3_curated
+        # Lista de buckets para facilitar conexões
+            s3_buckets = [s3_trusted, s3_raw, s3_curated]
 
         # Zona de disponibilidade us-east-1c
         with Cluster("us-east-1c"):
