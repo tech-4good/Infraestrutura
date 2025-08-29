@@ -40,9 +40,9 @@ with Diagram("|Diagrama de Rede| Tech4Good", filename="diagrama_de_rede_tech4goo
         ec2_pub_1c >> ec2_priv_1c
         ec2_pub_1b >> ec2_priv_1b
         # S3
-        for s3 in s3_buckets:
-            ec2_priv_1c >> s3
-            ec2_priv_1b >> s3
+    
+        ec2_priv_1c >> s3_raw
+        ec2_priv_1b >> s3_raw
         # Rotas
         lb >> route
         route >> [ec2_pub_1c, ec2_pub_1b, ec2_priv_1c, ec2_priv_1b]

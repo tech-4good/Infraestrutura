@@ -20,24 +20,18 @@ with Diagram("Diagrama de Solução", direction="LR"):
     with Cluster("AWS VPC"):
         igw = InternetGateway("Internet Gateway")
 
-        with Cluster("Front-End"):
+        with Cluster("Front-End", direction="LR"):
             fe_ec2 = EC2("EC2")
-            with Cluster("Container FE"):
-                fe_docker = Docker("Docker")
+            with Cluster("Container Docker", direction="LR"):
                 fe_react = React("React")
                 fe_node = Nodejs("Node.js")
-                fe_docker >> [fe_react, fe_node]
-            fe_ec2 >> fe_docker 
 
         with Cluster("Back-End"):
             be_ec2 = EC2("EC2")
-            with Cluster("Container BE"):
-                be_docker = Docker("Docker")
+            with Cluster("Container Docker", direction="LR"):
                 be_java = Java("Java Spring")
                 be_mysql = MySQL("MySQL")
-                be_docker >> [be_java, be_mysql]
-            be_ec2 >> be_docker
-
+         
         fe_ec2 - Edge(style="dashed") - be_ec2
 
     with Cluster("APIs Externas"):
