@@ -9,11 +9,14 @@ from diagrams.onprem.database import MySQL
 from diagrams.programming.language import Java, Nodejs
 from diagrams.programming.framework import React
 
+
+
 with Diagram("Diagrama de Solução", direction="LR"):
 
     with Cluster("ASA"):
         beneficiados = Users("Beneficiados")
         voluntario = Users("Voluntário(a)")
+
 
     internet = Internet("Internet")
 
@@ -34,7 +37,7 @@ with Diagram("Diagrama de Solução", direction="LR"):
          
         fe_ec2 - Edge(style="dashed") - be_ec2
 
-    with Cluster("APIs Externas"):
+    with Cluster("APIs Externas", direction="LR"):
         twilio = Server("Twilio")
         viacep = Server("ViaCEP")
         google_vision = Server("Google Vision")
@@ -45,4 +48,4 @@ with Diagram("Diagrama de Solução", direction="LR"):
 
     beneficiados >> voluntario >> internet >> igw
     igw >> fe_ec2
-    fe_ec2 >> api_gateway
+    fe_react >> api_gateway
