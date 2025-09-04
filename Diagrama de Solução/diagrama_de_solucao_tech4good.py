@@ -39,7 +39,7 @@ with Diagram("Diagrama de Solução", direction="LR"):
 
 
     with Cluster("APIs Externas", direction="LR"):
-        twilio = Custom("Twilio", './assets/twilio.png')
+        twilio = Custom("Twilio", './assets/twillio.png')
         viacep = Custom("ViaCEP", './assets/viacep.png')
         google_vision = Custom("Google Vision", "./assets/google_vision.png")
         api_gateway = Custom("API Gateway", "./assets/api.png")
@@ -47,5 +47,7 @@ with Diagram("Diagrama de Solução", direction="LR"):
 
     beneficiados >> voluntario >> internet >> igw
     igw >> fe_ec2
-    fe_react >> api_gateway 
+    fe_react >> api_gateway
+    api_gateway >> fe_react  
     be_java >> api_gateway
+    api_gateway >> be_java
