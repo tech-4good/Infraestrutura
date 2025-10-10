@@ -29,6 +29,11 @@ resource "aws_instance" "web1" {
     destination = "/home/ubuntu/compose.yaml"
   }
 
+  provisioner "file" {
+    source = "scripts/nginx.conf"
+    destination = "/home/ubuntu/nginx.conf"
+  }
+
 
   tags = { Name = "Web1" }
 }
@@ -43,6 +48,34 @@ resource "aws_instance" "web2" {
   vpc_security_group_ids = [aws_security_group.web_sg.id]
   associate_public_ip_address = true
   private_ip             = "10.0.0.36"
+
+  user_data = join("\n\n", [
+        file("${path.module}/scripts/instalar_docker_ubuntu.sh"),
+        file("${path.module}/scripts/instalar_nginx.sh"),
+        "mkdir -p /home/ubuntu/backend",
+        "sudo chown -R ubuntu:ubuntu /home/ubuntu/backend",
+        "sudo chmod 755 /home/ubuntu/backend"
+    ])
+
+  user_data_replace_on_change = true
+
+  connection {
+    type        = "ssh"
+    user        = "ubuntu"
+    private_key = file("./vockey.pem")
+    host        = self.public_ip
+  }
+
+  provisioner "file" {
+    source = "scripts/compose-nginx.yaml"
+    destination = "/home/ubuntu/compose.yaml"
+  }
+
+  provisioner "file" {
+    source = "scripts/nginx.conf"
+    destination = "/home/ubuntu/nginx.conf"
+  }
+
   tags = { Name = "Web2" }
 }
 

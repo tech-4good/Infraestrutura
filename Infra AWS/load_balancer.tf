@@ -53,3 +53,8 @@ resource "aws_lb_target_group_attachment" "web2" {
   target_id        = aws_instance.web2.id
   port             = 80
 }
+
+output "load_balancer_dns" {
+  value       = aws_lb.app_lb.dns_name
+  description = "DNS do Load Balancer para usar no front-end"
+}

@@ -1,4 +1,22 @@
 services:
+  mysql:
+    image: mysql:8
+    container_name: mysql-db
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_DATABASE: tech4good
+      MYSQL_USER: tech4good
+      MYSQL_PASSWORD: tech4good123
+    volumes:
+      - mysql_data:/var/lib/mysql
+    ports:
+      - "3306:3306"
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+
   api:
     image: amazoncorretto:21  # Imagem Java 21 da Amazon
     container_name: api-spring  # Nome fixo do container (opcional)
@@ -7,7 +25,19 @@ services:
       - /usr/share/api:/usr/share/api  
     ports:
       - "8080:8080"  # Exemplo: expondo uma porta (ajuste se o app usar outra em caso de réplica na mesma instância EC2)
+    depends_on:
+      mysql:
+        condition: service_healthy
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/tech4good
+      SPRING_DATASOURCE_USERNAME: tech4good
+      SPRING_DATASOURCE_PASSWORD: tech4good123
+
+volumes:
+  mysql_data:
 
 # DICA: para ver os logs de execução da API, use o comando:
-# docker compose logs -f api      
+# docker compose logs -f api
+# Para ver os logs do MySQL:
+# docker compose logs -f mysql      
 
