@@ -2,6 +2,7 @@ services:
   mysql:
     image: mysql:8
     container_name: mysql-db
+    restart: unless-stopped
     environment:
       MYSQL_ROOT_PASSWORD: root
       MYSQL_DATABASE: tech4good
@@ -20,6 +21,7 @@ services:
   api:
     image: amazoncorretto:21  # Imagem Java 21 da Amazon
     container_name: api-spring  # Nome fixo do container (opcional)
+    restart: unless-stopped
     command: sh -c "mkdir -p /usr/share/api && java -jar /usr/share/api/app.jar"  # Cria pasta se não existir e roda o JAR
     volumes: # Mapeamentos: host → container
       - /usr/share/api:/usr/share/api  

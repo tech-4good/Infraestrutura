@@ -82,7 +82,7 @@ resource "aws_instance" "web2" {
 resource "aws_instance" "db1" {
   ami                    = "ami-0e86e20dae9224db8"
   key_name               = "vockey"
-  instance_type          = "t2.micro"
+  instance_type          = "t2.medium"
   subnet_id              = aws_subnet.private1.id
   vpc_security_group_ids = [aws_security_group.db_sg.id]
   private_ip             = "10.0.0.20"
