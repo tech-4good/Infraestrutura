@@ -89,6 +89,7 @@ resource "aws_instance" "db1" {
 
   user_data = join("\n\n", [
     file("${path.module}/scripts/instalar_docker_ubuntu.sh"),
+    file("${path.module}/scripts/instalar_python_ubuntu.sh"),
     templatefile("${path.module}/scripts/instalar_java.sh", {
       arquivo_docker_compose = base64encode(file("${path.module}/scripts/compose-api.yaml"))
     })
