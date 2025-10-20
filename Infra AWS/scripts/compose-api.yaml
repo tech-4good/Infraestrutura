@@ -1,4 +1,18 @@
 services:
+  rabbitmq:
+    image: 'rabbitmq:3.13-management'
+    container_name: rabbitmq-tech4good
+    environment:
+      - 'RABBITMQ_DEFAULT_PASS=admin123'
+      - 'RABBITMQ_DEFAULT_USER=admin'
+    ports:
+      - '5672:5672'
+      - '15672:15672'
+    volumes:
+      - rabbitmq_data:/var/lib/rabbitmq
+    networks:
+      - tech4good-network
+
   mysql:
     image: mysql:8
     container_name: mysql-db
@@ -37,6 +51,11 @@ services:
 
 volumes:
   mysql_data:
+  rabbitmq_data:
+
+networks:
+  tech4good-network:
+    driver: bridge
 
 # DICA: para ver os logs de execução da API, use o comando:
 # docker compose logs -f api

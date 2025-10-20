@@ -10,6 +10,7 @@ resource "aws_instance" "web1" {
   user_data = join("\n\n", [
         file("${path.module}/scripts/instalar_docker_ubuntu.sh"),
         file("${path.module}/scripts/instalar_nginx.sh"),
+        file("${path.module}/scripts/instalar_python_ubuntu.sh"),
         "mkdir -p /home/ubuntu/backend",
         "sudo chown -R ubuntu:ubuntu /home/ubuntu/backend",
         "sudo chmod 755 /home/ubuntu/backend"
@@ -32,6 +33,14 @@ resource "aws_instance" "web1" {
   provisioner "file" {
     source = "scripts/nginx.conf"
     destination = "/home/ubuntu/nginx.conf"
+  }
+
+  provisioner "file" {
+    content = templatefile("${path.module}/scripts/voluntario_email_consumer.py", {
+      frontend_url = "http://${self.public_ip}:${var.frontend_port}/redefinir-senha"
+      rabbitmq_host = aws_instance.db1.private_ip
+    })
+    destination = "/home/ubuntu/voluntario_email_consumer.py"
   }
 
 

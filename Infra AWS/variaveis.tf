@@ -3,3 +3,9 @@ variable "cidr_qualquer_ip" {
     type = string 
     default = "0.0.0.0/0"
 }
+
+variable "frontend_port" {
+    description = "Porta do frontend"
+    type = number
+    default = 5173
+}
