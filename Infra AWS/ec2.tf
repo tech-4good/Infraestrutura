@@ -11,9 +11,21 @@ resource "aws_instance" "web1" {
         file("${path.module}/scripts/instalar_docker_ubuntu.sh"),
         file("${path.module}/scripts/instalar_nginx.sh"),
         file("${path.module}/scripts/instalar_python_ubuntu.sh"),
-        "mkdir -p /home/ubuntu/backend",
-        "sudo chown -R ubuntu:ubuntu /home/ubuntu/backend",
-        "sudo chmod 755 /home/ubuntu/backend"
+        <<-EOT
+        #!/bin/bash
+        # Configurar diretório de backend
+        mkdir -p /home/ubuntu/backend
+        sudo chown -R ubuntu:ubuntu /home/ubuntu/backend
+        sudo chmod 755 /home/ubuntu/backend
+        
+        # Garantir permissões SSH corretas
+        sudo -u ubuntu chmod 700 /home/ubuntu/.ssh
+        sudo -u ubuntu chmod 600 /home/ubuntu/.ssh/authorized_keys
+        sudo chown -R ubuntu:ubuntu /home/ubuntu/.ssh
+        
+        # Log de confirmação
+        echo "Web1 SSH setup completed at $(date)" | sudo tee -a /var/log/user-data.log
+        EOT
     ])
 
   user_data_replace_on_change = true
@@ -61,9 +73,21 @@ resource "aws_instance" "web2" {
   user_data = join("\n\n", [
         file("${path.module}/scripts/instalar_docker_ubuntu.sh"),
         file("${path.module}/scripts/instalar_nginx.sh"),
-        "mkdir -p /home/ubuntu/backend",
-        "sudo chown -R ubuntu:ubuntu /home/ubuntu/backend",
-        "sudo chmod 755 /home/ubuntu/backend"
+        <<-EOT
+        #!/bin/bash
+        # Configurar diretório de backend
+        mkdir -p /home/ubuntu/backend
+        sudo chown -R ubuntu:ubuntu /home/ubuntu/backend
+        sudo chmod 755 /home/ubuntu/backend
+        
+        # Garantir permissões SSH corretas
+        sudo -u ubuntu chmod 700 /home/ubuntu/.ssh
+        sudo -u ubuntu chmod 600 /home/ubuntu/.ssh/authorized_keys
+        sudo chown -R ubuntu:ubuntu /home/ubuntu/.ssh
+        
+        # Log de confirmação
+        echo "Web2 SSH setup completed at $(date)" | sudo tee -a /var/log/user-data.log
+        EOT
     ])
 
   user_data_replace_on_change = true
@@ -101,7 +125,28 @@ resource "aws_instance" "db1" {
     file("${path.module}/scripts/instalar_python_ubuntu.sh"),
     templatefile("${path.module}/scripts/instalar_java.sh", {
       arquivo_docker_compose = base64encode(file("${path.module}/scripts/compose-api.yaml"))
-    })
+    }),
+    <<-EOT
+    #!/bin/bash
+    # Garantir que a chave SSH vockey está no authorized_keys
+    # Isso permite que Web1/Web2 conectem na DB1 usando a mesma chave
+    
+    # Gerar a chave pública a partir da chave privada do par vockey
+    # (A AWS já adiciona automaticamente ao criar a instância, mas vamos garantir)
+    
+    # Criar diretório .ssh se não existir
+    sudo -u ubuntu mkdir -p /home/ubuntu/.ssh
+    sudo -u ubuntu chmod 700 /home/ubuntu/.ssh
+    
+    # A AWS já adiciona a chave do par vockey automaticamente
+    # Mas vamos garantir que as permissões estão corretas
+    sudo -u ubuntu chmod 600 /home/ubuntu/.ssh/authorized_keys
+    sudo chown -R ubuntu:ubuntu /home/ubuntu/.ssh
+    
+    # Log para debug
+    echo "SSH setup completed at $(date)" | sudo tee -a /var/log/user-data.log
+    ls -la /home/ubuntu/.ssh/ | sudo tee -a /var/log/user-data.log
+    EOT
   ])
 
   user_data_replace_on_change = true
