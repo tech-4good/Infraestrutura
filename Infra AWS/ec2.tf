@@ -5,7 +5,6 @@ resource "aws_instance" "web1" {
   subnet_id              = aws_subnet.public1.id
   vpc_security_group_ids = [aws_security_group.web_sg.id]
   associate_public_ip_address = true
-  private_ip             = "10.0.0.4"
 
   user_data = join("\n\n", [
         file("${path.module}/scripts/instalar_docker_ubuntu.sh"),
@@ -48,6 +47,11 @@ resource "aws_instance" "web1" {
   }
 
   provisioner "file" {
+    source = "scripts/compose-api.yaml"
+    destination = "/home/ubuntu/compose-api.yaml"
+  }
+
+  provisioner "file" {
     content = templatefile("${path.module}/scripts/voluntario_email_consumer.py", {
       frontend_url = "http://${self.public_ip}:${var.frontend_port}/redefinir-senha"
       rabbitmq_host = aws_instance.db1.private_ip
@@ -68,7 +72,6 @@ resource "aws_instance" "web2" {
   subnet_id              = aws_subnet.public2.id
   vpc_security_group_ids = [aws_security_group.web_sg.id]
   associate_public_ip_address = true
-  private_ip             = "10.0.0.36"
 
   user_data = join("\n\n", [
         file("${path.module}/scripts/instalar_docker_ubuntu.sh"),
