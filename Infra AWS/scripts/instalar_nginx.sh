@@ -5,8 +5,8 @@
 
 mkdir -p /home/ubuntu/frontend/nginx/templates
 mkdir -p /home/ubuntu/frontend/nginx/conf.d
-chown -R ubuntu:ubuntu /home/ubuntu/frontend
 echo "<h1>Uh papai! NGINX via Docker Compose!</h1>" > /home/ubuntu/frontend/index.html
+chown -R ubuntu:ubuntu /home/ubuntu/frontend
 echo "Diretórios do nginx criados com sucesso."
 
 # Aguardar o Docker estar totalmente pronto
@@ -36,6 +36,7 @@ if [ ! -f "/home/ubuntu/frontend/nginx/conf.d/default.conf" ]; then
         add_header Content-Type text/plain;
     }
 }' > /home/ubuntu/frontend/nginx/conf.d/default.conf
+  chown ubuntu:ubuntu /home/ubuntu/frontend/nginx/conf.d/default.conf
   sudo docker compose -f /home/ubuntu/compose.yaml restart
 fi
 
