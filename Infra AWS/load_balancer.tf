@@ -21,9 +21,9 @@ resource "aws_lb_target_group" "app_tg" {
     protocol            = "HTTP"
     matcher             = "200"
     interval            = 30
-    timeout             = 5
+    timeout             = 10
     healthy_threshold   = 2
-    unhealthy_threshold = 2
+    unhealthy_threshold = 10  # Aumentado para ser mais tolerante durante inicialização
   }
 
   tags = {
@@ -46,12 +46,18 @@ resource "aws_lb_target_group_attachment" "web1" {
   target_group_arn = aws_lb_target_group.app_tg.arn
   target_id        = aws_instance.web1.id
   port             = 80
+
+  # Aguarda a instância estar totalmente inicializada com o Nginx rodando
+  depends_on = [aws_instance.web1]
 }
 
 resource "aws_lb_target_group_attachment" "web2" {
   target_group_arn = aws_lb_target_group.app_tg.arn
   target_id        = aws_instance.web2.id
   port             = 80
+
+  # Aguarda a instância estar totalmente inicializada com o Nginx rodando
+  depends_on = [aws_instance.web2]
 }
 
 output "load_balancer_dns" {
