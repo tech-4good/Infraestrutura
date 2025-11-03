@@ -31,6 +31,8 @@ services:
       interval: 10s
       timeout: 5s
       retries: 3
+    networks:
+      - tech4good-network
 
   api:
     image: amazoncorretto:21  # Imagem Java 21 da Amazon
@@ -44,10 +46,19 @@ services:
     depends_on:
       mysql:
         condition: service_healthy
+      rabbitmq:
+        condition: service_started
     environment:
       SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/tech4good
       SPRING_DATASOURCE_USERNAME: tech4good
       SPRING_DATASOURCE_PASSWORD: tech4good123
+      SPRING_RABBITMQ_HOST: rabbitmq
+      SPRING_RABBITMQ_PORT: "5672"
+      SPRING_RABBITMQ_USERNAME: admin
+      SPRING_RABBITMQ_PASSWORD: admin123
+      SPRING_RABBITMQ_VIRTUAL_HOST: "/"
+    networks:
+      - tech4good-network
 
 volumes:
   mysql_data:

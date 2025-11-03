@@ -24,6 +24,18 @@ resource "aws_instance" "web1" {
         
         # Log de confirmação
         echo "Web1 SSH setup completed at $(date)" | sudo tee -a /var/log/user-data.log
+
+        # Python + venv para o consumer
+        apt-get update -y
+        apt-get install -y python3 python3-pip python3-venv
+
+        # cria venv e instala dependências no usuário ubuntu
+        su - ubuntu -c 'python3 -m venv /home/ubuntu/venvs/consumer'
+        su - ubuntu -c '/home/ubuntu/venvs/consumer/bin/pip install --upgrade pip pika requests'
+
+        # garante execução no boot (cron @reboot) usando o Python do venv
+        su - ubuntu -c '(crontab -l 2>/dev/null; echo "@reboot /home/ubuntu/venvs/consumer/bin/python /home/ubuntu/voluntario_email_consumer.py >> /home/ubuntu/consumer.log 2>&1") | crontab -'
+
         EOT
     ])
 
