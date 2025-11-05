@@ -9,9 +9,10 @@ resource "aws_instance" "web1" {
   user_data = join("\n\n", [
         file("${path.module}/scripts/instalar_docker_ubuntu.sh"),
         file("${path.module}/scripts/instalar_nginx.sh"),
-        file("${path.module}/scripts/instalar_python_ubuntu.sh"),
         <<-EOT
         #!/bin/bash
+        set -e
+        
         # Configurar diretório de backend
         mkdir -p /home/ubuntu/backend
         sudo chown -R ubuntu:ubuntu /home/ubuntu/backend
@@ -25,17 +26,18 @@ resource "aws_instance" "web1" {
         # Log de confirmação
         echo "Web1 SSH setup completed at $(date)" | sudo tee -a /var/log/user-data.log
 
-        # Python + venv para o consumer
+        # Forçar instalação de dependências Python via apt (pacotes do sistema Ubuntu)
+        export DEBIAN_FRONTEND=noninteractive
         apt-get update -y
-        apt-get install -y python3 python3-pip python3-venv
+        apt-get install -y python3 python3-pika python3-requests
 
-        # cria venv e instala dependências no usuário ubuntu
-        su - ubuntu -c 'python3 -m venv /home/ubuntu/venvs/consumer'
-        su - ubuntu -c '/home/ubuntu/venvs/consumer/bin/pip install --upgrade pip pika requests'
+        # Validar instalação
+        python3 -c "import pika, requests; print('Dependências Python OK')" 2>&1 | sudo tee -a /var/log/user-data.log
 
-        # garante execução no boot (cron @reboot) usando o Python do venv
-        su - ubuntu -c '(crontab -l 2>/dev/null; echo "@reboot /home/ubuntu/venvs/consumer/bin/python /home/ubuntu/voluntario_email_consumer.py >> /home/ubuntu/consumer.log 2>&1") | crontab -'
+        # Garantir execução no boot (cron @reboot) usando python3 do sistema
+        su - ubuntu -c '(crontab -l 2>/dev/null; echo "@reboot /usr/bin/python3 /home/ubuntu/voluntario_email_consumer.py >> /home/ubuntu/consumer.log 2>&1") | crontab -'
 
+        echo "Consumer cron configured at $(date)" | sudo tee -a /var/log/user-data.log
         EOT
     ])
 
@@ -70,7 +72,6 @@ resource "aws_instance" "web1" {
     })
     destination = "/home/ubuntu/voluntario_email_consumer.py"
   }
-
 
   tags = { Name = "Web1" }
 }
