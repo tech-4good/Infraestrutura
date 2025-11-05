@@ -218,7 +218,6 @@ class VoluntarioEmailConsumer:
                     <p style="word-break: break-all; background-color: #e9e9e9; padding: 10px; border-radius: 4px;">
                         {reset_url}
                     </p>
-                    <p><strong>Atenção:</strong> Este link expira em 24 horas.</p>
                     <p>Se você não solicitou esta redefinição, ignore este email.</p>
                 </div>
                 <div class="footer">
@@ -239,8 +238,6 @@ class VoluntarioEmailConsumer:
         
         Para redefinir sua senha, acesse o seguinte link:
         {reset_url}
-        
-        Atenção: Este link expira em 24 horas.
         
         Se você não solicitou esta redefinição, ignore este email.
         
