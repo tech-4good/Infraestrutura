@@ -65,14 +65,6 @@ resource "aws_instance" "web1" {
     destination = "/home/ubuntu/compose-api.yaml"
   }
 
-  provisioner "file" {
-    content = templatefile("${path.module}/scripts/voluntario_email_consumer.py", {
-      frontend_url = "http://${self.public_ip}:${var.frontend_port}/redefinir-senha"
-      rabbitmq_host = aws_instance.db1.private_ip
-    })
-    destination = "/home/ubuntu/voluntario_email_consumer.py"
-  }
-
   tags = { Name = "Web1" }
 }
 
@@ -178,4 +170,48 @@ resource "aws_instance" "db2" {
   vpc_security_group_ids = [aws_security_group.db_sg.id]
   private_ip             = "10.0.0.52"
   tags                   = { Name = "DB2" }
+}
+
+# ----------------------------------------------------------------------------
+# Deploy do consumer de e-mail APÓS o EIP estar associado na Web1
+# Evita usar self.public_ip durante a criação da instância (que ainda não tem EIP)
+# ----------------------------------------------------------------------------
+resource "null_resource" "deploy_consumer_web1" {
+  depends_on = [
+    aws_eip.web1_eip,
+    aws_instance.web1,
+    aws_instance.db1
+  ]
+
+  # Garante reexecução quando o template mudar ou o IP do EIP mudar
+  triggers = {
+    template_sha = filesha256("${path.module}/scripts/voluntario_email_consumer.py")
+    web1_ip      = aws_eip.web1_eip.public_ip
+    db1_ip       = aws_instance.db1.private_ip
+  }
+
+  connection {
+    type        = "ssh"
+    user        = "ubuntu"
+    private_key = file("./vockey.pem")
+    host        = aws_eip.web1_eip.public_ip
+  }
+
+  provisioner "file" {
+    content = templatefile("${path.module}/scripts/voluntario_email_consumer.py", {
+      frontend_url = "http://${aws_eip.web1_eip.public_ip}/redefinir-senha"
+      rabbitmq_host = aws_instance.db1.private_ip
+    })
+    destination = "/home/ubuntu/voluntario_email_consumer.py"
+  }
+
+  provisioner "remote-exec" {
+    inline = [
+      "sudo chown ubuntu:ubuntu /home/ubuntu/voluntario_email_consumer.py",
+      "sudo chmod 644 /home/ubuntu/voluntario_email_consumer.py",
+      # Reiniciar o consumer para usar o novo arquivo imediatamente
+      "pkill -f voluntario_email_consumer.py || true",
+      "nohup /usr/bin/python3 /home/ubuntu/voluntario_email_consumer.py >> /home/ubuntu/consumer.log 2>&1 &"
+    ]
+  }
 }
