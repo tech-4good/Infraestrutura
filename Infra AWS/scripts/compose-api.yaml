@@ -38,15 +38,17 @@ services:
     image: amazoncorretto:21  # Imagem Java 21 da Amazon
     container_name: api-spring  # Nome fixo do container (opcional)
     restart: unless-stopped
-    command: sh -c "mkdir -p /usr/share/api && java -jar /usr/share/api/app.jar"  # Cria pasta se não existir e roda o JAR
-    volumes: # Mapeamentos: host → container
-      - /usr/share/api:/usr/share/api  
+    command: sh -c "mkdir -p /usr/share/api && java -jar /usr/share/api/app.jar"
+    volumes:
+      - /usr/share/api:/usr/share/api
     ports:
-      - "8080:8080"  # Exemplo: expondo uma porta (ajuste se o app usar outra em caso de réplica na mesma instância EC2)
+      - "8080:8080"
     depends_on:
       mysql:
         condition: service_healthy
       rabbitmq:
+        condition: service_started
+      redis:
         condition: service_started
     environment:
       SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/tech4good
@@ -57,19 +59,54 @@ services:
       SPRING_RABBITMQ_USERNAME: admin
       SPRING_RABBITMQ_PASSWORD: admin123
       SPRING_RABBITMQ_VIRTUAL_HOST: "/"
+      # Ajuste estes nomes conforme sua config no Spring
+      SPRING_DATA_REDIS_HOST: redis
+      SPRING_DATA_REDIS_PORT: "6379"
     networks:
       - tech4good-network
+
+  redis:
+    image: redis:7-alpine
+    container_name: redis
+    command:
+      [
+        "redis-server",
+        "--maxmemory", "512mb",
+        "--maxmemory-policy", "allkeys-lfu",
+        "--save", "60", "1",
+        "--loglevel", "warning"
+      ]
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    networks:
+      - tech4good-network
+
+  # OPCIONAL: painel de administração RedisInsight
+  redisinsight:
+    image: redis/redisinsight:latest
+    container_name: redisinsight
+    ports:
+      - "5540:5540"
+    depends_on:
+      - redis
+    networks:
+      - tech4good-network
+    volumes:
+      - redisinsight_data:/data
 
 volumes:
   mysql_data:
   rabbitmq_data:
+  redis_data:
+  redisinsight_data:
 
 networks:
   tech4good-network:
     driver: bridge
 
 # DICA: para ver os logs de execução da API, use o comando:
-# docker compose logs -f api
-# Para ver os logs do MySQL:
-# docker compose logs -f mysql      
-
+# docker-compose -f compose-api.yaml logs -f api
+# Para ver os logs do Redis:
+# docker-compose -f compose-api.yaml logs -f redis
