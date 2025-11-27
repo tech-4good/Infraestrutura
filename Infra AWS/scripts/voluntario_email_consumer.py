@@ -261,6 +261,23 @@ class VoluntarioEmailConsumer:
             message_str = body.decode('utf-8')
             message_data = json.loads(message_str)
             
+            # O RabbitMQ com Jackson (Spring) envia no formato: ["classe", {objeto}]
+            # Precisamos pegar o segundo elemento se for uma lista
+            if isinstance(message_data, list) and len(message_data) == 2:
+                print(f"[DEBUG] Formato Jackson detectado: [{message_data[0]}, {{...}}]")
+                message_data = message_data[1]  # Pega o objeto, ignora o nome da classe
+            
+            # Validação de campos obrigatórios
+            campos_obrigatorios = ['voluntarioId', 'voluntarioNome', 'voluntarioEmail', 'tokenRedefinicao']
+            campos_faltando = [campo for campo in campos_obrigatorios if campo not in message_data]
+            
+            if campos_faltando:
+                print(f"[ERRO] Mensagem inválida - Campos faltando: {campos_faltando}")
+                print(f"Dados recebidos: {message_data}")
+                # Rejeita a mensagem malformada (não reprocessa)
+                ch.basic_nack(delivery_tag=method.delivery_tag, requeue=False)
+                return
+            
             # Extrai informações da mensagem
             voluntario_id = message_data.get('voluntarioId')
             voluntario_nome = message_data.get('voluntarioNome')
@@ -313,8 +330,11 @@ class VoluntarioEmailConsumer:
         except Exception as e:
             print(f"[ERRO] Erro ao processar mensagem: {e}")
             print(f"Mensagem raw: {body}")
+            import traceback
+            traceback.print_exc()
             # Recoloca a mensagem na fila para tentar novamente
             ch.basic_nack(delivery_tag=method.delivery_tag, requeue=True)
+
 
     def start_consuming(self):
         """Inicia o consumo de mensagens"""

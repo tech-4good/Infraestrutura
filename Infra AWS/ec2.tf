@@ -34,10 +34,6 @@ resource "aws_instance" "web1" {
         # Validar instalação
         python3 -c "import pika, requests; print('Dependências Python OK')" 2>&1 | sudo tee -a /var/log/user-data.log
 
-        # Garantir execução no boot (cron @reboot) usando python3 do sistema
-        su - ubuntu -c '(crontab -l 2>/dev/null; echo "@reboot /usr/bin/python3 /home/ubuntu/voluntario_email_consumer.py >> /home/ubuntu/consumer.log 2>&1") | crontab -'
-
-        echo "Consumer cron configured at $(date)" | sudo tee -a /var/log/user-data.log
         EOT
     ])
 
@@ -209,9 +205,11 @@ resource "null_resource" "deploy_consumer_web1" {
     inline = [
       "sudo chown ubuntu:ubuntu /home/ubuntu/voluntario_email_consumer.py",
       "sudo chmod 644 /home/ubuntu/voluntario_email_consumer.py",
-      # Reiniciar o consumer para usar o novo arquivo imediatamente
-      "pkill -f voluntario_email_consumer.py || true",
-      "nohup /usr/bin/python3 /home/ubuntu/voluntario_email_consumer.py >> /home/ubuntu/consumer.log 2>&1 &"
+      "sudo bash -c 'cat > /etc/systemd/system/voluntario-email-consumer.service' <<'EOF'\n[Unit]\nDescription=Tech4Good - Voluntario Email Consumer\nAfter=network-online.target\n\n[Service]\nUser=ubuntu\nWorkingDirectory=/home/ubuntu\nExecStart=/usr/bin/python3 /home/ubuntu/voluntario_email_consumer.py\nRestart=always\nRestartSec=5\nEnvironment=PYTHONUNBUFFERED=1\n\n[Install]\nWantedBy=multi-user.target\nEOF",
+      "sudo systemctl daemon-reload",
+      "sudo systemctl enable voluntario-email-consumer",
+      "sudo systemctl start voluntario-email-consumer",
+      "echo 'Consumer service deployed successfully'"
     ]
   }
 }
