@@ -12,3 +12,5 @@ terraform.log
 # .pem
 *.pem
 
+*.hcl
+*.info
